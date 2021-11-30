@@ -26,7 +26,7 @@ requirements: test_environment
 
 ## Make Dataset
 data: requirements
-	$(PYTHON_INTERPRETER) acoustic_data_science/data/make_dataset.py data/raw data/processed
+	$(PYTHON_INTERPRETER) acoustic_data_science/processing/process_data.py data/raw data/processed
 
 ## Delete all compiled Python files
 clean:
