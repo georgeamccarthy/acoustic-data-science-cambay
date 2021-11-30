@@ -2,12 +2,13 @@
 import logging
 from pathlib import Path
 from dotenv import find_dotenv, load_dotenv
-
 import pandas as pd
 import numpy as np
 import datetime
 import os
 import glob
+from engarde.decorators import none_missing
+
 import acoustic_data_science.config as config
 
 def combine_csvs(month):
@@ -102,7 +103,8 @@ def calc_spl(df):
     
     return df
 
-
+# Will throw error if returned df has nan data in any cell.
+@none_missing()
 def process_df(df):
     # Timestamp.
     df = get_timestamps(df)
