@@ -7,7 +7,6 @@ import numpy as np
 import datetime
 import os
 import glob
-from engarde.decorators import none_missing
 
 import acoustic_data_science.config as config
 
@@ -94,7 +93,7 @@ def broadband_func(x):
 
 def calc_spl(df):
     # Apply function, map to dataframe, sum by row, take the log and then normalise to maximum value of zero.
-    df['broadband_spl'] = 10*np.log10(df.loc[:, '25.1188643150958':'25118.8643150958'].applymap(broadband_func).sum(axis=1))
+    df['broadband_spl'] = 10*np.log10(df.loc[:, '25':'25119'].applymap(broadband_func).sum(axis=1))
     df['broadband_spl'] = df['broadband_spl'] - df['broadband_spl'].max()
     
     # Calculate 'background' sound level using moving average.
@@ -103,21 +102,56 @@ def calc_spl(df):
     
     return df
 
+
+def tag_loud_events(df):
+    df['loud'] = df['broadband_spl']>(df['background']+10)
+
+    return df
+
+
+def tag_short_transients(df):
+    '''
+    Tags loud events lasting less than 0.5 s as short transients.
+    '''
+
+    df['trans_shft_down'] = np.concatenate((np.array([True]), df['loud'][:-1]))
+    df['trans_shft_up'] = np.concatenate((df['loud'][1:], np.array([True])))
+    df['short_transient'] = df['loud'] & (df['trans_shft_down']==False) & (df['trans_shft_up']==False)
+    df.drop(columns=['trans_shft_down', 'trans_shft_up'], inplace=True)
+    
+    return df
+
+
+def tol_headers_to_ints(df):  
+    '''
+    Renames the TOL headers as integers so they are easier to type.
+    '''
+    float_tol_columns = df.loc[:, '25.1188643150958':'25118.8643150958'].columns
+    int_tol_columns = np.round(df.loc[:, '25.1188643150958':'25118.8643150958'].columns.astype('float')).astype('int')
+
+    float_to_int_tol_dict = {}
+    for old, new in zip(float_tol_columns, int_tol_columns):
+        float_to_int_tol_dict[A] = B
+
+    df.rename(columns=float_to_int_tol_dict,)
+    return df
+
+
 # Will throw error if returned df has nan data in any cell.
-@none_missing()
 def process_df(df):
-    # Timestamp.
+    logging.info("Timestamping.")
     df = get_timestamps(df)
     
+    logging.info("Cleaning data.")
     # Remove nan spl.
     pre_clean_length = len(df)
     df = remove_nans(inf_to_nans(df)).reset_index()
-    #print(f'{len(df)/pre_clean_length*100:.2f}% data retained after removing nans and surrounding rows.')
+    logging.info(f'{len(df)/pre_clean_length*100:.2f}% of rows retained after clean.')
     
-    # Sort by timestamp.
+    logging.info("Sorting data by timestamps.")
     df.sort_values('timestamp', inplace=True, ignore_index=True)
 
-    # Downcast where possible to save memory.
+    # Save memory by downcasting where possible.
     df['1213'] = pd.to_numeric(df['1213'], downcast='integer')
 
     for column in df.columns:
@@ -126,12 +160,24 @@ def process_df(df):
 
     # Remove nan times.
     pre_clean_length = len(df)
-    df.drop(df[pd.isnull(df['timestamp'])].index, inplace=True)
-    #print(f'{len(df)/pre_clean_length*100:.2f} of data retained after removing nan times.')
+    df = df.drop(df[pd.isnull(df['timestamp'])].index).reset_index()
+    logging.info(f'{len(df)/pre_clean_length*100:.2f} of cleaned data retained after removing unrecognised filenames.')
     
-    # Calculate broadband SPL and background.
+    logging.info("Renaming the TOL headers as integers.")
+    df = tol_headers_to_ints(df)
+
+    logging.info("Calculating broadband SPL and background.")
     df = calc_spl(df)
+
+    logging.info("Tagging loud transients (where broadband SPL is 10 dB above background).")
+    df = tag_loud_events(df)
+
+    logging.info("Tagging short transients.")
+    df = tag_short_transients(df)
     
+    logging.info("Dropping PAMGuide false time column.")
+    df  = df.drop(columns=['1213']).reset_index()
+
     return df
 
 
@@ -143,14 +189,16 @@ def process_monthly_data():
             month_paths.append(csv_folder_path)
 
     for month in sorted(month_paths):
+        logging.info("Combining CSVs to feather file.")
         df = combine_csvs(month)
         df = process_df(df)
-        df.to_feather(os.path.join(config.processed_data_path,month.split('/')[-1]+'.feather'))
+        feather_path = os.path.join(config.processed_data_path,month.split('/')[-1]+'.feather')
+        logging.info(f"Saving processed data to {feather_path}.")
+        df.to_feather(feather_path)
 
 if __name__ == "__main__":
     log_fmt = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
     logging.basicConfig(level=logging.INFO, format=log_fmt)
 
-    logger = logging.getLogger(__name__)    
-    logger.info("Making final dataset from raw CSV data.")
+    logging.info("Making final dataset from raw CSV data.")
     process_monthly_data()
