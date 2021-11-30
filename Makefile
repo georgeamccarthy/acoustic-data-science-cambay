@@ -26,7 +26,7 @@ requirements: test_environment
 
 ## Make Dataset
 data: requirements
-	$(PYTHON_INTERPRETER) src/data/make_dataset.py data/raw data/processed
+	$(PYTHON_INTERPRETER) acoustic_data_science/data/make_dataset.py data/raw data/processed
 
 ## Delete all compiled Python files
 clean:
@@ -34,7 +34,7 @@ clean:
 	find . -type d -name "__pycache__" -delete
 
 format:
-	black --line-length 79 --experimental-string-processing src/**/*.py
+	black --line-length 79 --experimental-string-processing acoustic_data_science/**/*.py
 
 ## Set up python interpreter environment
 create_environment:

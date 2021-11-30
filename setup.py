@@ -1,7 +1,7 @@
 from setuptools import find_packages, setup
 
 setup(
-    name='src',
+    name='acoustic-data-science',
     packages=find_packages(),
     version='1.0',
     description='Exploring sea ice processes in the Arctic with acoustic physics and data science.',
