@@ -98,13 +98,16 @@ def calc_spl(df):
     
     # Calculate 'background' sound level using moving average.
     window = 60*60*2 # 60 minutes.
-    df['background' ] = df['broadband_spl'].rolling(window).mean()    
-    
+    df['background_spl' ] = df['broadband_spl'].rolling(window).mean()    
+
+    # Start of data (duration of window) will be null so drop it.
+    df = df.drop(df[pd.isnull(df['background_spl'])].index).reset_index(drop=True)
+
     return df
 
 
 def tag_loud_events(df):
-    df['loud'] = df['broadband_spl']>(df['background']+10)
+    df['loud'] = df['broadband_spl']>(df['background_spl']+10)
 
     return df
 
@@ -131,28 +134,27 @@ def tol_headers_to_ints(df):
 
     float_to_int_tol_dict = {}
     for old, new in zip(float_tol_columns, int_tol_columns):
-        float_to_int_tol_dict[A] = B
+        float_to_int_tol_dict[old] = str(new)
 
-    df.rename(columns=float_to_int_tol_dict,)
+    df = df.rename(columns=float_to_int_tol_dict,)
     return df
 
 
-# Will throw error if returned df has nan data in any cell.
 def process_df(df):
+    logging.info("Dropping PAMGuide false time column.")
+    df  = df.drop(columns=['1213']).reset_index(drop=True)
+
     logging.info("Timestamping.")
     df = get_timestamps(df)
     
     logging.info("Cleaning data.")
     # Remove nan spl.
     pre_clean_length = len(df)
-    df = remove_nans(inf_to_nans(df)).reset_index()
+    df = remove_nans(inf_to_nans(df))
     logging.info(f'{len(df)/pre_clean_length*100:.2f}% of rows retained after clean.')
     
     logging.info("Sorting data by timestamps.")
     df.sort_values('timestamp', inplace=True, ignore_index=True)
-
-    # Save memory by downcasting where possible.
-    df['1213'] = pd.to_numeric(df['1213'], downcast='integer')
 
     for column in df.columns:
         if df[column].dtype == 'float64':
@@ -160,13 +162,13 @@ def process_df(df):
 
     # Remove nan times.
     pre_clean_length = len(df)
-    df = df.drop(df[pd.isnull(df['timestamp'])].index).reset_index()
-    logging.info(f'{len(df)/pre_clean_length*100:.2f} of cleaned data retained after removing unrecognised filenames.')
+    df = df.drop(df[pd.isnull(df['timestamp'])].index).reset_index(drop=True)
+    logging.info(f'{len(df)/pre_clean_length*100:.2f}% of cleaned data retained after removing unrecognised filenames.')
     
     logging.info("Renaming the TOL headers as integers.")
     df = tol_headers_to_ints(df)
 
-    logging.info("Calculating broadband SPL and background.")
+    logging.info("Calculating broadband SPL and background SPL.")
     df = calc_spl(df)
 
     logging.info("Tagging loud transients (where broadband SPL is 10 dB above background).")
@@ -174,9 +176,9 @@ def process_df(df):
 
     logging.info("Tagging short transients.")
     df = tag_short_transients(df)
-    
-    logging.info("Dropping PAMGuide false time column.")
-    df  = df.drop(columns=['1213']).reset_index()
+
+    # Reset index.
+    #df = df.reset_index()
 
     return df
 
@@ -189,16 +191,15 @@ def process_monthly_data():
             month_paths.append(csv_folder_path)
 
     for month in sorted(month_paths):
-        logging.info("Combining CSVs to feather file.")
-        df = combine_csvs(month)
+        logging.info(f"=== Processing {month.split('/')[-1]} ===")
+        df = pd.read_feather(os.path.join(config.raw_feathers_path, month.split('/')[-1]+'.feather'))
         df = process_df(df)
-        feather_path = os.path.join(config.processed_data_path,month.split('/')[-1]+'.feather')
+        feather_path = os.path.join(config.processed_data_path, month.split('/')[-1]+'.feather')
         logging.info(f"Saving processed data to {feather_path}.")
         df.to_feather(feather_path)
 
 if __name__ == "__main__":
-    log_fmt = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-    logging.basicConfig(level=logging.INFO, format=log_fmt)
+
 
     logging.info("Making final dataset from raw CSV data.")
     process_monthly_data()

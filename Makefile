@@ -25,8 +25,15 @@ requirements: test_environment
 	$(PYTHON_INTERPRETER) -m pip install -r requirements.txt
 
 ## Make Dataset
-data: requirements
-	$(PYTHON_INTERPRETER) acoustic_data_science/processing/process_data.py data/raw data/processed
+combine: requirements
+	$(PYTHON_INTERPRETER) acoustic_data_science/processing/combine_csvs.py
+
+## Make Dataset
+process: requirements
+	$(PYTHON_INTERPRETER) acoustic_data_science/processing/process_data.py
+
+## Make Dataset
+data: requirements combine process
 
 ## Delete all compiled Python files
 clean:
