@@ -14,26 +14,23 @@ durations_stats_txt_path = os.path.join(
 )
 
 
+def report_transient_stats(transient_durations, f):
+    print(f"min (s) {transient_durations.min()}", file=f)
+    print(f"max (s) {transient_durations.max() / 60}", file=f)
+    print(f"max (mins) {transient_durations.max()/ 60:.2f}", file=f)
+    print(f"sd {transient_durations.std()}", file=f)
 
-def report_transient_stats(transient_durations):
-    with open(durations_stats_txt_path, "a") as f:
-        print(3)
-        print(f"min (s) {transient_durations.min()}", file=f)
-        print(f"max (s) {transient_durations.max() / 60}", file=f)
-        print(f"max (mins) {transient_durations.max()/ 60:.2f}", file=f)
-        print(f"sd {transient_durations.std()}", file=f)
-
-        print(
-            "Number of transients with durations > 0.5"
-            f" {len(transient_durations[transient_durations > 0.5])}",
-            file=f
-        )
-        print(
-            "Number of transients with durations = 0.5"
-            f" {len(transient_durations[transient_durations == 0.5])}",
-            file=f
-        )
-        print('', file=f)
+    print(
+        "Number of transients with durations > 0.5"
+        f" {len(transient_durations[transient_durations > 0.5])}",
+        file=f
+    )
+    print(
+        "Number of transients with durations = 0.5"
+        f" {len(transient_durations[transient_durations == 0.5])}",
+        file=f
+    )
+    print('', file=f)
 
 
 def report_monthly_transient_stats(monthly_transient_durations):
@@ -41,14 +38,11 @@ def report_monthly_transient_stats(monthly_transient_durations):
     months = helpers.get_months(config.processed_data_path)
     
     with open(durations_stats_txt_path, "w") as f:
-        print("Transit Duration Stats", file=f)
-        print(1)
+        print("Transit Duration Stats\n", file=f)
 
-    with open(durations_stats_txt_path, "a") as f:
         for transient_durations, month in zip(monthly_transient_durations, months):
             print(f"=== {helpers.get_month_name_from_path(month)} ===", file=f)
-            print(2)
-            report_transient_stats(transient_durations)
+            report_transient_stats(transient_durations, f)
 
 
 def get_longest_duration(monthly_transient_durations):
@@ -142,7 +136,7 @@ def plot_duration_histograms(
 
 
 if __name__ == "__main__":
-    monthly_transient_durations = get_monthly_transit_durations()
+    monthly_transient_durations = helpers.load_monthly_transient_durations()
 
     plot_duration_histograms(
         monthly_transient_durations,

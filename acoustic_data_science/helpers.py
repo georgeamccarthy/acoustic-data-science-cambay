@@ -1,6 +1,7 @@
 from re import sub
 import glob
 import logging
+import numpy as np
 
 from acoustic_data_science import config
 
@@ -32,3 +33,5 @@ def get_months(data_path):
 
     return months
 
+def load_monthly_transient_durations():
+    return list(np.load(config.monthly_transient_durations_path, allow_pickle=True))
