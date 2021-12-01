@@ -1,0 +1,81 @@
+Transit Duration Stats
+min (s) 0.5
+max (s) 28.966666666666665
+max (mins) 28.97
+sd 47.46305169081882
+Number of transients with durations > 0.5 7326
+Number of transients with durations = 0.5 6184
+
+min (s) 0.5
+max (s) 57.36666666666667
+max (mins) 57.37
+sd 88.93874024660622
+Number of transients with durations > 0.5 3669
+Number of transients with durations = 0.5 3280
+
+min (s) 0.5
+max (s) 127.30833333333334
+max (mins) 127.31
+sd 74.67025998097311
+Number of transients with durations > 0.5 5355
+Number of transients with durations = 0.5 7417
+
+min (s) 0.5
+max (s) 71.1
+max (mins) 71.10
+sd 37.176971750702606
+Number of transients with durations > 0.5 4921
+Number of transients with durations = 0.5 11109
+
+min (s) 0.5
+max (s) 212.48333333333332
+max (mins) 212.48
+sd 68.31600218228407
+Number of transients with durations > 0.5 11541
+Number of transients with durations = 0.5 28908
+
+min (s) 0.5
+max (s) 27.333450000000003
+max (mins) 27.33
+sd 8.689977496764183
+Number of transients with durations > 0.5 17595
+Number of transients with durations = 0.5 44919
+
+min (s) 0.5
+max (s) 32.733216666666664
+max (mins) 32.73
+sd 8.544279156443034
+Number of transients with durations > 0.5 21587
+Number of transients with durations = 0.5 47435
+
+min (s) 0.5
+max (s) 74.66666666666667
+max (mins) 74.67
+sd 17.569230092244897
+Number of transients with durations > 0.5 34467
+Number of transients with durations = 0.5 64364
+
+min (s) 0.5
+max (s) 253.50833333333333
+max (mins) 253.51
+sd 68.31815950165402
+Number of transients with durations > 0.5 22417
+Number of transients with durations = 0.5 39280
+
+min (s) 0.5
+max (s) 49.37445
+max (mins) 49.37
+sd 16.968061730236837
+Number of transients with durations > 0.5 32643
+Number of transients with durations = 0.5 46810
+
+=== 2018_08 ===
+=== 2018_09 ===
+=== 2018_10 ===
+=== 2018_11 ===
+=== 2018_12 ===
+=== 2019_01 ===
+=== 2019_02 ===
+=== 2019_03 ===
+=== 2019_04 ===
+=== 2019_05 ===

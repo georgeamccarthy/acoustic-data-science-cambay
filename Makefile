@@ -1,4 +1,4 @@
-.PHONY: clean data requirements sync_data_to_s3 sync_data_from_s3 format
+.PHONY: clean data requirements sync_data_to_s3 sync_data_from_s3 format plot analyse
 
 #################################################################################
 # GLOBALS                                                                       #
@@ -24,16 +24,35 @@ requirements: test_environment
 	$(PYTHON_INTERPRETER) -m pip install -U pip setuptools wheel
 	$(PYTHON_INTERPRETER) -m pip install -r requirements.txt
 
-## Make Dataset
-combine: requirements
+remake_logs:
+	echo > 'acoustic_data_science/logs.log'
+
+## Combine raw CSV files into raw feather files.
+combine: requirements remake_logs
 	$(PYTHON_INTERPRETER) acoustic_data_science/processing/combine_csvs.py
 
-## Make Dataset
-process: requirements
+## Process raw feather files into data ready for analysis.
+process: requirements remake_logs
 	$(PYTHON_INTERPRETER) acoustic_data_science/processing/process_data.py
 
 ## Make Dataset
-data: requirements combine process
+data: requirements remake_logs combine process
+
+## Analyse dataset.
+analyse: 
+	$(PYTHON_INTERPRETER) acoustic_data_science/analysis/transient_durations.py
+
+## Create all figures.
+plot: 
+	$(PYTHON_INTERPRETER) acoustic_data_science/plotting/transient_durations.py
+
+
+
+## Build everything from base.
+all: 
+	data
+	analyse
+	plot
 
 ## Delete all compiled Python files
 clean:
