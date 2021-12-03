@@ -39,6 +39,7 @@ def get_monthly_transit_durations():
 
     return monthly_transient_durations
 
+
 if __name__ == '__main__':
     monthly_transient_durations = get_monthly_transit_durations()
     np.save(config.monthly_transient_durations_path, monthly_transient_durations)

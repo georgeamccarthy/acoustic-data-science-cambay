@@ -36,7 +36,7 @@ process: requirements remake_logs
 	$(PYTHON_INTERPRETER) acoustic_data_science/processing/process_data.py
 
 ## Make Dataset
-data: requirements remake_logs combine process
+data: requirements remake_logs process
 
 ## Analyse dataset.
 analyse: 

@@ -106,16 +106,50 @@ def broadband_func(x):
     return 10 ** (x / 10)
 
 
-def calc_spl(df):
+def calc_spl(df, background_window_mins):
+    '''
+    Takes background window size in minutes.
+    '''
+
+    # Background window is in half second intervals.
+    background_window = background_window_mins * 60 * 2
+
     # Apply function, map to dataframe, sum by row, take the log and then normalise to maximum value of zero.
     df["broadband_spl"] = 10 * np.log10(
         df.loc[:, "25":"25119"].applymap(broadband_func).sum(axis=1)
     )
+    logging.info(df["broadband_spl"].max())
     df["broadband_spl"] = df["broadband_spl"] - df["broadband_spl"].max()
 
     # Calculate 'background' sound level using moving average.
     window = 60 * 60 * 2  # 60 minutes.
-    df["background_spl"] = df["broadband_spl"].rolling(window).mean()
+    df["background_spl"] = df["broadband_spl"].rolling(background_window_mins).mean()
+
+    # Start of data (duration of window) will be null so drop it.
+    df = df.drop(df[pd.isnull(df["background_spl"])].index).reset_index(
+        drop=True
+    )
+
+    return df
+
+def calc_spl(df, background_window_mins):
+    '''
+    Takes background window size in minutes.
+    '''
+
+    # Background window is in half second intervals.
+    background_window = background_window_mins * 60 * 2
+
+    # Apply function, map to dataframe, sum by row, take the log and then normalise to maximum value of zero.
+    df["broadband_spl"] = 10 * np.log10(
+        df.loc[:, "25":"25119"].applymap(broadband_func).sum(axis=1)
+    )
+    logging.info(df["broadband_spl"].max())
+    df["broadband_spl"] = df["broadband_spl"] - df["broadband_spl"].max()
+
+    # Calculate 'background' sound level using moving average.
+    window = 60 * 60 * 2  # 60 minutes.
+    df["background_spl"] = df["broadband_spl"].rolling(background_window_mins).mean()
 
     # Start of data (duration of window) will be null so drop it.
     df = df.drop(df[pd.isnull(df["background_spl"])].index).reset_index(
@@ -246,5 +280,5 @@ def process_monthly_data():
 
 if __name__ == "__main__":
 
-    logging.info("Making final dataset from raw CSV data.")
+    logging.info("Making final dataset from raw feather files.")
     process_monthly_data()
