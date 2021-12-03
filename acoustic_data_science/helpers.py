@@ -37,5 +37,9 @@ def get_months(data_path):
 def load_monthly_transient_durations():
     return list(np.load(config.monthly_transient_durations_path, allow_pickle=True))
 
+
 def feather_path_from_month_name(data_path, month_name):
     return os.path.join(data_path, month_name + '.feather')
+
+def get_tols_df(df):
+    return df.loc[:, "25":"25119"]
