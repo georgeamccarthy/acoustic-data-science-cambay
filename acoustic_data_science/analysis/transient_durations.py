@@ -4,6 +4,7 @@ import logging
 
 from acoustic_data_science import config, helpers
 
+
 def get_transient_durations(df):
     # Mask df to only get loud rows.
     df["index_group"] = df.index - np.arange(df.shape[0])
@@ -27,7 +28,7 @@ def get_transient_durations(df):
 
 def get_monthly_transit_durations():
     logging.info("Getting monthly transit durations.")
-    months = helpers.get_months(config.processed_data_path)
+    months = helpers.get_month_names(config.processed_data_path)
     monthly_transient_durations = []
 
     for feather_path in helpers.get_feather_paths(config.processed_data_path):
@@ -40,6 +41,8 @@ def get_monthly_transit_durations():
     return monthly_transient_durations
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     monthly_transient_durations = get_monthly_transit_durations()
-    np.save(config.monthly_transient_durations_path, monthly_transient_durations)
+    np.save(
+        config.monthly_transient_durations_path, monthly_transient_durations
+    )

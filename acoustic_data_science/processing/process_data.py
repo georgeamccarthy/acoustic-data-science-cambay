@@ -8,7 +8,7 @@ import datetime
 import os
 import glob
 
-import acoustic_data_science.config as config
+from acoustic_data_science import config, helpers
 
 
 def combine_csvs(month):
@@ -37,7 +37,6 @@ def get_timestamp(csv_name):
     Example file name:
     ICLISTENHF1266_20180930T235802.000Z_TOL_1sHannWindow_50PercentOverlap.csv
     """
-
     try:
         time_str = csv_name[15:34]
 
@@ -106,50 +105,42 @@ def broadband_func(x):
     return 10 ** (x / 10)
 
 
-def calc_spl(df, background_window_mins):
-    '''
-    Takes background window size in minutes.
-    '''
+def calc_broadband_spl(df, noramlise=False):
+    """
+    Calculates unnormalised broadband SPL by averaging over TOLs.
+    """
 
-    # Background window is in half second intervals.
-    background_window = background_window_mins * 60 * 2
-
-    # Apply function, map to dataframe, sum by row, take the log and then normalise to maximum value of zero.
-    df["broadband_spl"] = 10 * np.log10(
+    unnormalised_broadband_spl = 10 * np.log10(
         df.loc[:, "25":"25119"].applymap(broadband_func).sum(axis=1)
     )
-    logging.info(df["broadband_spl"].max())
-    df["broadband_spl"] = df["broadband_spl"] - df["broadband_spl"].max()
 
-    # Calculate 'background' sound level using moving average.
-    window = 60 * 60 * 2  # 60 minutes.
-    df["background_spl"] = df["broadband_spl"].rolling(background_window_mins).mean()
+    if noramlise == False:
+        logging.info(
+            "Calculating unnormalised broadband SPL (normalise later)."
+        )
+        # Broadband SPL will be normalised later compared to other months.
+        df["unnormalised_broadband_spl"] = unnormalised_broadband_spl
 
-    # Start of data (duration of window) will be null so drop it.
-    df = df.drop(df[pd.isnull(df["background_spl"])].index).reset_index(
-        drop=True
-    )
+    else:
+        logging.info("Calculating normalised broadband SPL.")
+        df["broadband_spl"] = (
+            unnormalised_broadband_spl - unnormalised_broadband_spl.max()
+        )
 
     return df
 
-def calc_spl(df, background_window_mins):
-    '''
-    Takes background window size in minutes.
-    '''
+
+def calc_background_spl(df, background_window_mins=10):
+    """
+    Calculate 'background' sound level using moving average of normalised
+    background SPL.
+    """
 
     # Background window is in half second intervals.
     background_window = background_window_mins * 60 * 2
-
-    # Apply function, map to dataframe, sum by row, take the log and then normalise to maximum value of zero.
-    df["broadband_spl"] = 10 * np.log10(
-        df.loc[:, "25":"25119"].applymap(broadband_func).sum(axis=1)
+    df["background_spl"] = (
+        df["broadband_spl"].rolling(background_window_mins).mean()
     )
-    logging.info(df["broadband_spl"].max())
-    df["broadband_spl"] = df["broadband_spl"] - df["broadband_spl"].max()
-
-    # Calculate 'background' sound level using moving average.
-    window = 60 * 60 * 2  # 60 minutes.
-    df["background_spl"] = df["broadband_spl"].rolling(background_window_mins).mean()
 
     # Start of data (duration of window) will be null so drop it.
     df = df.drop(df[pd.isnull(df["background_spl"])].index).reset_index(
@@ -160,6 +151,11 @@ def calc_spl(df, background_window_mins):
 
 
 def tag_loud_events(df):
+    logging.info(
+        "Tagging loud events (where broadband SPL is 10 dB above"
+        " background SPL)."
+    )
+
     df["loud"] = df["broadband_spl"] > (df["background_spl"] + 10)
 
     return df
@@ -169,6 +165,8 @@ def tag_short_transients(df):
     """
     Tags loud events lasting less than 0.5 s as short transients.
     """
+
+    logging.info("Tagging short transients.")
 
     df["trans_shft_down"] = np.concatenate((np.array([True]), df["loud"][:-1]))
     df["trans_shft_up"] = np.concatenate((df["loud"][1:], np.array([True])))
@@ -205,6 +203,13 @@ def tol_headers_to_ints(df):
     return df
 
 
+def select_exactly_one_month(df, month_name):
+    month_number = int(month_name.split("_")[1])
+    df = df[df["timestamp"].dt.month == month_number].reset_index(drop=True)
+
+    return df
+
+
 def process_df(df):
     logging.info("Dropping PAMGuide false time column.")
     df = df.drop(columns=["1213"]).reset_index(drop=True)
@@ -238,44 +243,65 @@ def process_df(df):
     logging.info("Renaming the TOL headers as integers.")
     df = tol_headers_to_ints(df)
 
-    logging.info("Calculating broadband SPL and background SPL.")
-    df = calc_spl(df)
-
-    logging.info(
-        "Tagging loud transients (where broadband SPL is 10 dB above"
-        " background)."
-    )
-    df = tag_loud_events(df)
-
-    logging.info("Tagging short transients.")
-    df = tag_short_transients(df)
-
-    # Reset index.
-    # df = df.reset_index()
+    df = calc_broadband_spl(df, noramlise=False)
 
     return df
 
 
 def process_monthly_data():
-    month_paths = []
-    for month in os.listdir(config.raw_csvs_path):
-        csv_folder_path = f"{config.raw_csvs_path}/{month}"
-        if os.path.isdir(csv_folder_path):
-            month_paths.append(csv_folder_path)
+    month_paths = helpers.get_raw_csv_month_paths()
+    month_names = [
+        helpers.get_month_name_from_month_path(month_path)
+        for month_path in month_paths
+    ]
 
-    for month in sorted(month_paths):
-        logging.info(f"=== Processing {month.split('/')[-1]} ===")
-        df = pd.read_feather(
-            os.path.join(
-                config.raw_feathers_path, month.split("/")[-1] + ".feather"
-            )
+    overall_max_broadband_spl = 0
+    for month_name in month_names:
+        logging.info(f"=== Processing {month_name} ===")
+        raw_feather_path = helpers.feather_path_from_month_name(
+            config.raw_feathers_path, month_name
         )
+        df = pd.read_feather(raw_feather_path)
         df = process_df(df)
-        feather_path = os.path.join(
-            config.processed_data_path, month.split("/")[-1] + ".feather"
+        df = select_exactly_one_month(df, month_name)
+
+        max_broadband_spl = df["unnormalised_broadband_spl"].max()
+        logging.info(
+            f"Max unnormalised broadband SPL in {month_name} is"
+            f" {max_broadband_spl:.2f}"
         )
-        logging.info(f"Saving processed data to {feather_path}.")
-        df.to_feather(feather_path)
+        if max_broadband_spl > overall_max_broadband_spl:
+            overall_max_broadband_spl = max_broadband_spl
+
+        interim_feather_path = helpers.feather_path_from_month_name(
+            config.interim_data_path, month_name
+        )
+        logging.info(f"Saving interim data to {interim_feather_path}.")
+        df.to_feather(interim_feather_path)
+
+    for month_name in month_names:
+        interim_feather_path = helpers.feather_path_from_month_name(
+            config.interim_data_path, month_name
+        )
+        df = pd.read_feather(interim_feather_path)
+
+        logging.info(
+            "Normalising broadband SPL over all months. Max SPL:"
+            f" {overall_max_broadband_spl:.2f}."
+        )
+        df["broadband_spl"] = (
+            df["unnormalised_broadband_spl"] - overall_max_broadband_spl
+        )
+
+        df = calc_background_spl(df)
+        df = tag_loud_events(df)
+        df = tag_short_transients(df)
+
+        processed_feather_path = helpers.feather_path_from_month_name(
+            config.processed_data_path, month_name
+        )
+
+        df.to_feather(processed_feather_path)
 
 
 if __name__ == "__main__":

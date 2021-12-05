@@ -23,25 +23,27 @@ def report_transient_stats(transient_durations, f):
     print(
         "Number of transients with durations > 0.5"
         f" {len(transient_durations[transient_durations > 0.5])}",
-        file=f
+        file=f,
     )
     print(
         "Number of transients with durations = 0.5"
         f" {len(transient_durations[transient_durations == 0.5])}",
-        file=f
+        file=f,
     )
-    print('', file=f)
+    print("", file=f)
 
 
 def report_monthly_transient_stats(monthly_transient_durations):
     logging.info("Reporting monthly transient stats.")
-    months = helpers.get_months(config.processed_data_path)
-    
+    month_names = helpers.get_month_names(config.processed_data_path)
+
     with open(durations_stats_txt_path, "w") as f:
         print("Transit Duration Stats\n", file=f)
 
-        for transient_durations, month in zip(monthly_transient_durations, months):
-            print(f"=== {helpers.get_month_name_from_path(month)} ===", file=f)
+        for transient_durations, month_name in zip(
+            monthly_transient_durations, month_names
+        ):
+            print(f"=== {month_name} ===", file=f)
             report_transient_stats(transient_durations, f)
 
 
@@ -57,7 +59,7 @@ def get_max_bin_size(
 ):
     max_bin_size = 0
 
-    months = helpers.get_months(config.processed_data_path)
+    months = helpers.get_month_names(config.processed_data_path)
 
     for transient_durations, month in zip(monthly_transient_durations, months):
         if min_duration is not None:
@@ -89,7 +91,7 @@ def plot_duration_histograms(
     fig = plt.figure(figsize=(15, 15))
     fig.suptitle(f"{title} {bins} bins.")
 
-    months = helpers.get_months(config.processed_data_path)
+    months = helpers.get_month_names(config.processed_data_path)
 
     i = 0
     for transient_durations, month in zip(monthly_transient_durations, months):

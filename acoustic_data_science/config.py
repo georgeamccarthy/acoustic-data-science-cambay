@@ -19,6 +19,9 @@ stdout_log_handler = logging.StreamHandler(sys.stdout)
 logging.basicConfig(level=logging.INFO, format=log_fmt, handlers=(file_log_handler, stdout_log_handler))
 #logger.setLevel(level='INFO')
 
-figure_ending = 'png'
+figure_ending = '.png'
 
 monthly_transient_durations_path = os.path.join(project_dir, 'acoustic_data_science/analysis/monthly_transient_durations.npy')
+whole_year_path = os.path.join(processed_data_path, 'whole_year/whole_year.feather')
+
+figures_path = os.path.join(project_dir, 'figures')

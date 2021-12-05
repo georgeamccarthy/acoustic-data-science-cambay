@@ -41,10 +41,12 @@ data: requirements remake_logs process
 ## Analyse dataset.
 analyse: 
 	$(PYTHON_INTERPRETER) acoustic_data_science/analysis/transient_durations.py
+	$(PYTHON_INTERPRETER) acoustic_data_science/analysis/whole_year_spl.py
 
 ## Create all figures.
 plot: 
 	$(PYTHON_INTERPRETER) acoustic_data_science/plotting/transient_durations.py
+	$(PYTHON_INTERPRETER) acoustic_data_science/plotting/whole_year_spl.py
 
 
 
