@@ -1,4 +1,4 @@
-.PHONY: clean data requirements sync_data_to_s3 sync_data_from_s3 format plot analyse
+.PHONY: clean data requirements sync_data_to_s3 sync_data_from_s3 format plot analyse all
 
 #################################################################################
 # GLOBALS                                                                       #
@@ -34,6 +34,7 @@ combine: requirements remake_logs
 ## Process raw feather files into data ready for analysis.
 process: requirements remake_logs
 	$(PYTHON_INTERPRETER) acoustic_data_science/processing/process_data.py
+	$(PYTHON_INTERPRETER) acoustic_data_science/processing/ice_coverage.py
 
 ## Make Dataset
 data: requirements remake_logs process
@@ -47,14 +48,11 @@ analyse:
 plot: 
 	$(PYTHON_INTERPRETER) acoustic_data_science/plotting/transient_durations.py
 	$(PYTHON_INTERPRETER) acoustic_data_science/plotting/whole_year_spl.py
-
+	$(PYTHON_INTERPRETER) acoustic_data_science/plotting/ice_coverage.py
 
 
 ## Build everything from base.
-all: 
-	data
-	analyse
-	plot
+all: data analyse plot
 
 ## Delete all compiled Python files
 clean:

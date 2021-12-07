@@ -249,9 +249,9 @@ def process_df(df):
 
 
 def process_monthly_data():
-    month_paths = helpers.get_raw_csv_month_paths()
+    month_paths = helpers.get_month_paths(config.raw_csvs_path)
     month_names = [
-        helpers.get_month_name_from_month_path(month_path)
+        helpers.month_name_from_month_path(month_path)
         for month_path in month_paths
     ]
 
@@ -298,7 +298,8 @@ def process_monthly_data():
         df = tag_short_transients(df)
 
         processed_feather_path = helpers.feather_path_from_month_name(
-            config.processed_data_path, month_name
+            config.processed_data_path, 
+            month_name
         )
 
         df.to_feather(processed_feather_path)

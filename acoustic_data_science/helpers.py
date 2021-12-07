@@ -23,7 +23,7 @@ def month_name_from_month_path(month_path):
 
 
 def feather_path_from_month_name(data_path, month_name):
-    return os.path.join(data_path, month_name + '.feather')
+    return os.path.join(data_path, 'monthly_data', month_name + '.feather')
 
 
 def get_feather_paths(data_path):

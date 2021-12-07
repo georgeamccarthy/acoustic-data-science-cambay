@@ -29,6 +29,9 @@ def combine_csvs(month):
 
 
 def combine_monthly_csvs():
+    """
+    Combines monthly CSVs and saves them as feather files.
+    """
     logging.info("Combining CSVs to feather file.")
 
     month_paths = []
