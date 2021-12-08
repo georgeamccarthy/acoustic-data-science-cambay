@@ -2,7 +2,7 @@ import pandas as pd
 import os
 from acoustic_data_science import config, helpers
 
-feather_paths = helpers.get_feather_paths(config.processed_data_path)
+feather_paths = helpers.get_feather_paths(config.processed_data_path + '/monthly_data')
 
 df_generator = (
     pd.read_feather(

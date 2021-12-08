@@ -9,8 +9,8 @@ project_dir = Path(__file__).resolve().parents[1]
 interim_data_path = os.path.join(project_dir, 'data/interim')
 processed_data_path = os.path.join(project_dir, 'data/processed')
 external_data_path = os.path.join(project_dir, 'data/external')
-raw_csvs_path = os.path.join(project_dir, 'data/raw/reorganised_tols')
-raw_feathers_path = os.path.join(project_dir, 'data/raw/raw_feathers')
+raw_csvs_path = os.path.join(project_dir, 'data/raw/monthly_data/reorganised_tols')
+raw_feathers_path = os.path.join(project_dir, 'data/raw/monthly_data/raw_feathers')
 
 log_fmt = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 

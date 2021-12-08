@@ -14,7 +14,7 @@ from acoustic_data_science import config, helpers
 def combine_csvs(month):
     """
     Takes path to month folder which should contain all CSVs to be combined as
-    top level files e.g. ../data/raw/reorganised_tols/
+    top level files e.g. ../data/raw/monthly_data/reorganised_tols/
     Returns dataframe with CSVs contatenated and filenames column.
     """
 
@@ -139,7 +139,7 @@ def calc_background_spl(df, background_window_mins=10):
     # Background window is in half second intervals.
     background_window = background_window_mins * 60 * 2
     df["background_spl"] = (
-        df["broadband_spl"].rolling(background_window_mins).mean()
+        df["broadband_spl"].rolling(background_window).mean()
     )
 
     # Start of data (duration of window) will be null so drop it.
@@ -258,8 +258,8 @@ def process_monthly_data():
     overall_max_broadband_spl = 0
     for month_name in month_names:
         logging.info(f"=== Processing {month_name} ===")
-        raw_feather_path = helpers.feather_path_from_month_name(
-            config.raw_feathers_path, month_name
+        raw_feather_path = os.path.join(
+            config.raw_feathers_path, month_name + ".feather"
         )
         df = pd.read_feather(raw_feather_path)
         df = process_df(df)
@@ -298,8 +298,7 @@ def process_monthly_data():
         df = tag_short_transients(df)
 
         processed_feather_path = helpers.feather_path_from_month_name(
-            config.processed_data_path, 
-            month_name
+            config.processed_data_path, month_name
         )
 
         df.to_feather(processed_feather_path)
