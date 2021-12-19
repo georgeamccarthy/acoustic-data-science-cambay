@@ -1,5 +1,6 @@
 import pandas as pd
 from acoustic_data_science import config
+import numpy as np
 
 
 def process_ice_coverage_csv():
@@ -36,6 +37,27 @@ def process_ice_coverage_csv():
 
     return df
 
+def get_monthly_ice_concentration():
+    ice_concentration = pd.read_csv(config.processed_data_path + '/cambridge_bay_sea_ice_properties_from_ice_charts.csv')[["timestamp", "total_concentration", "mean_temperature"]]
+    ice_concentration = ice_concentration.replace(np.nan, 0)
+
+    ice_concentration["timestamp"] = ice_concentration["timestamp"].apply(pd.to_datetime)
+    ice_concentration["month"] = ice_concentration['timestamp'].apply(lambda x: '{year}{month:02}'.format(year=x.year, month=x.month)).values
+    #ice_concentration_monthly = ice_concentration.groupby("month").mean()
+    #ice_concentration_monthly = ice_concentration_monthly.sort_values(["month"])
+
+    #ice_concentration_monthly[201808 <= ice_concentration_monthly["month"]]
+    ice_concentration_monthly = ice_concentration.drop(columns=["timestamp"]).groupby("month", as_index=False).mean()
+    ice_concentration_monthly["total_concentration"] = ice_concentration_monthly["total_concentration"].round()
+    #ice_concentration_monthly[201808 < int(ice_concentration_monthly["month"])]
+
+    new_row = {'month':'201808', 'total_concentration':0}
+    ice_concentration_monthly = ice_concentration_monthly.append(new_row, ignore_index=True)
+    ice_concentration_monthly = ice_concentration_monthly.sort_values(["month"]).reset_index(drop=True)
+
+    ice_concentration_monthly = ice_concentration_monthly[ice_concentration_monthly["month"].astype("int") <= 201905]
+    ice_concentration_monthly["month"] = ice_concentration_monthly["month"].astype("str")
+    return ice_concentration_monthly
 
 if __name__ == "__main__":
     ice_coverage_df = process_ice_coverage_csv()
@@ -43,3 +65,5 @@ if __name__ == "__main__":
         config.processed_data_path
         + "/cambridge_bay_sea_ice_properties_from_ice_charts.csv"
     )
+    monthly_ice_concentration_df = get_monthly_ice_concentration()
+    monthly_ice_concentration_df.to_csv(config.processed_data_path + '/monthly_ice_concentration.csv', index=False)

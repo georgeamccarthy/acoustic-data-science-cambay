@@ -1,5 +1,3 @@
-# This cell is from the template notebook. It contains ipython magic and
-# various useful imports which are commonly used in this app.
 
 import pandas as pd
 import datetime
@@ -80,6 +78,8 @@ def plot_multiple_ice_coverage_properties_as_grid(df, ice_properties):
     )
     plt.savefig(figure_path)
 
+def plot_ice_conc_sod_temp_as_one_plot():
+    return None
 
 if __name__ == "__main__":
     ice_properties = [
@@ -96,3 +96,4 @@ if __name__ == "__main__":
 
     plot_multiple_ice_coverage_properties_as_one_plot(df, ice_properties)
     plot_multiple_ice_coverage_properties_as_grid(df, ice_properties)
+    plot_ice_conc_sod_temp_as_one_plot(df, ice_properties)

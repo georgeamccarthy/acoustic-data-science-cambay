@@ -136,6 +136,118 @@ def plot_duration_histograms(
         )
     )
 
+def plot_monthly_transient_durations_by_length(whole_year_transients_df):
+    short_transients_df = whole_year_transients_df[whole_year_transients_df["duration"] <= 0.5].groupby("month").size()
+    med_short_transients_df = whole_year_transients_df[(0.5 < whole_year_transients_df["duration"]) & (whole_year_transients_df["duration"] <= 5)].groupby("month").size()
+    med_transients_df = whole_year_transients_df[(5 < whole_year_transients_df["duration"]) & (whole_year_transients_df["duration"] <= 3*60)].groupby("month").size()
+    long_transients_df = whole_year_transients_df[(3*60 < whole_year_transients_df["duration"]) & (whole_year_transients_df["duration"] <= 20*60)].groupby("month").size()
+
+    plt.figure(figsize=(16,8))
+
+    x = short_transients_df.index
+    y = short_transients_df.values
+    plt.bar(x, y, label=r"$0 \less \rm{duration} \leq 0.5$ sec")
+
+    x = med_short_transients_df.index
+    y = med_short_transients_df.values
+    plt.bar(x, y, label=r"$0.5 \less \rm{duration} \leq 5$ sec")
+
+    x = med_transients_df.index
+    y = med_transients_df.values
+    plt.bar(x, y, label=r"$5 \less \rm{duration} \leq 3 \rm{min}$")
+
+    x = long_transients_df.index
+    y = long_transients_df.values
+    plt.bar(x, y, label=r"$3 \rm{min} \less \rm{duration} \leq 20 \rm{min}$")
+
+    plt.legend()
+
+    plt.savefig(
+        os.path.join(
+            config.figures_path,
+            "transient_durations/monthly_transient_durations_by_length" + config.figure_ending,
+        )
+    )
+
+
+def plot_monthly_long_transient_durations_and_ice_concentration(whole_year_transients_df):
+    short_transients_df = whole_year_transients_df[whole_year_transients_df["duration"] <= 0.5].groupby("month").size()
+    med_short_transients_df = whole_year_transients_df[(0.5 < whole_year_transients_df["duration"]) & (whole_year_transients_df["duration"] <= 5)].groupby("month").size()
+    med_transients_df = whole_year_transients_df[(5 < whole_year_transients_df["duration"]) & (whole_year_transients_df["duration"] <= 3*60)].groupby("month").size()
+    long_transients_df = whole_year_transients_df[(3*60 < whole_year_transients_df["duration"]) & (whole_year_transients_df["duration"] <= 20*60)].groupby("month").size()
+
+    fig, ax = plt.subplots(1,1,figsize=(16,8))
+
+    ax.bar(whole_year_transients_df["month"].unique(), 0)
+
+    x = long_transients_df.index
+    y = long_transients_df.values
+    ax.bar(x, y, label=r"$3 \rm{min} \less \rm{duration} \leq 20 \rm{min}$")
+    ax.set_ylabel("Number of long transients per month")
+
+    ax2 = ax.twinx()
+    ax.set_ylabel("Number of long transients per month")
+    monthly_ice_concentration = pd.read_csv(config.processed_data_path + "/monthly_ice_concentration.csv")
+    x = monthly_ice_concentration["month"].astype("str")
+    y = monthly_ice_concentration["total_concentration"]
+    ax2.set_ylabel("Ice concentration (/10)")
+    ax2.scatter(x, y, label="Ice concentration")
+    ax2.plot(x, y)
+
+    ax.legend(loc="upper left")
+    ax2.legend(loc="upper right")
+    plt.savefig(
+        os.path.join(
+            config.figures_path,
+            "transient_durations/monthly_long_transient_durations_and_ice_concentration" + config.figure_ending,
+        )
+    )
+
+
+def plot_monthly_long_transient_durations_and_temperature(whole_year_transients_df):
+    short_transients_df = whole_year_transients_df[whole_year_transients_df["duration"] <= 0.5].groupby("month").size()
+    med_short_transients_df = whole_year_transients_df[(0.5 < whole_year_transients_df["duration"]) & (whole_year_transients_df["duration"] <= 5)].groupby("month").size()
+    med_transients_df = whole_year_transients_df[(5 < whole_year_transients_df["duration"]) & (whole_year_transients_df["duration"] <= 3*60)].groupby("month").size()
+    long_transients_df = whole_year_transients_df[(3*60 < whole_year_transients_df["duration"]) & (whole_year_transients_df["duration"] <= 20*60)].groupby("month").size()
+
+    fig, ax = plt.subplots(1,1,figsize=(16,8))
+    ax.set_ylabel("Number of long transients per month")
+
+    x = short_transients_df.index
+    y = short_transients_df.values
+    ax.bar(x, y, label=r"$0 \less \rm{duration} \leq 0.5$ sec")
+
+    x = med_short_transients_df.index
+    y = med_short_transients_df.values
+    ax.bar(x, y, label=r"$0.5 \less \rm{duration} \leq 5$ sec")
+
+    x = med_transients_df.index
+    y = med_transients_df.values
+    ax.bar(x, y, label=r"$5 \less \rm{duration} \leq 3 \rm{min}$")
+
+    x = long_transients_df.index
+    y = long_transients_df.values
+    ax.bar(x, y, label=r"$3 \rm{min} \less \rm{duration} \leq 20 \rm{min}$")
+
+    ax2 = ax.twinx()
+    monthly_ice_concentration = pd.read_csv(config.processed_data_path + "/monthly_ice_concentration.csv")
+    x = monthly_ice_concentration["month"].astype("str")
+    y = monthly_ice_concentration["mean_temperature"]
+    ax2.set_ylabel("Temperature (deg C)")
+    ax2.scatter(x, y, label="Temperature (deg C)", color="black")
+    ax2.plot(x, y, color="black")
+
+    ax.legend(loc="upper left")
+    ax2.legend(loc="upper right")
+
+    plt.legend()
+    plt.savefig(
+        os.path.join(
+            config.figures_path,
+            "transient_durations/monthly_long_transient_durations_and_temperature" + config.figure_ending,
+        )
+    )
+
 
 if __name__ == "__main__":
     monthly_transient_durations = helpers.load_monthly_transient_durations()
@@ -165,5 +277,10 @@ if __name__ == "__main__":
         max_duration=15,
         title="Only transients shorter than 15 seconds.",
     )
+
+    whole_year_transients_df = pd.read_feather(config.processed_data_path + '/transient_timestamps_and_durations/whole_year.feather')
+    plot_monthly_transient_durations_by_length(whole_year_transients_df)
+    plot_monthly_long_transient_durations_and_ice_concentration(whole_year_transients_df)
+    plot_monthly_long_transient_durations_and_temperature(whole_year_transients_df)
 
     report_monthly_transient_stats(monthly_transient_durations)
